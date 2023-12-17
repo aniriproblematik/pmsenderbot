@@ -1,0 +1,94 @@
+import re
+import asyncio
+from pyrogram import Client
+import config
+from random import choice
+
+# Функция чтения аккаунтов из файла
+def read_accounts(file_path):
+    global account
+    global accountss
+    accounts = []
+    accountss = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            session_name = line.strip()
+            account = Client(session_name, api_id=int(config.api_id), api_hash=config.api_hash)
+            accounts.append(account)
+            accountss.append(session_name)
+    return accounts
+
+# Функция чтения пользователей из файла
+def read_users(file_path):
+    usernames = []
+    with open(file_path, 'r', encoding='latin-1') as file:
+        for line in file:
+            match = re.search(r'Username:\s([^\s;]+)', line)
+            if match:
+                usernames.append(match.group(1))
+            else:
+                usernames.append(line.replace("@", "").replace("https://t.me/", ""))
+    return usernames
+
+# Функция добавления пользователей в группу
+async def add_users_to_group(accounts_list, users_list):
+    global chat_id
+    num_accounts = len(accounts_list)
+    num_users = len(users_list)
+    user_index = 0
+    usf = []
+    pause = int(open("pause.txt", "r").read())
+
+
+    while user_index < num_users:
+        for index in range(num_accounts):
+            clients = accounts_list[index]
+            username = users_list[user_index]
+            global account
+            global accountss
+            try:
+                await clients.start()
+                if username not in open("added_users.txt", "r"):
+                    list = []
+                    file = open("text.txt", "r", encoding='utf-8')
+                    for i in file:
+                        list.append(i)
+                    try:
+                        await clients.send_video(str(username), "video.mp4", choice(list), width=1920, height=1080)
+                    except:
+                        await clients.send_message(str(username), choice(list))
+                    print(f"Аккаунт {accountss[index]} написал {username}.")
+                    f = open("added_users.txt", "a+")
+                    f.write(username + "\n")
+                    f.close()
+                    usf.append(username)
+                    print(len(usf))
+                    user_index += 1
+                    if user_index >= num_users:
+                        break  
+                else:
+                    print("added user")
+                    user_index += 1
+                    if user_index >= num_users:
+                        break 
+            except Exception as e:
+                t = open('err.txt', 'a+')
+                t.write(f"{username}, {e}, {accountss[index]}\n")
+                t.close()
+                user_index += 1
+                if user_index >= num_users:
+                    break
+            finally:
+                await clients.stop()
+        await asyncio.sleep(pause) 
+
+async def main():
+    accounts_file = 'accounts.txt'  
+    users_file = 'users.txt' 
+
+    accounts_list = read_accounts(accounts_file)
+    users_list = read_users(users_file)
+
+    await add_users_to_group(accounts_list, users_list)
+
+asyncio.run(main())
