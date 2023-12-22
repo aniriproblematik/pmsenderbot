@@ -18,6 +18,14 @@ def read_accounts(file_path):
             accountss.append(session_name)
     return accounts
 
+# Функция чтения прокси из файла
+def read_proxies(file_path):
+    proxies = []
+    with open(file_path, 'r') as file:
+        for line in file:
+            proxies.append(line.strip())
+    return proxies
+
 # Функция чтения пользователей из файла
 def read_users(file_path):
     usernames = []
@@ -31,7 +39,7 @@ def read_users(file_path):
     return usernames
 
 # Функция добавления пользователей в группу
-async def add_users_to_group(accounts_list, users_list):
+async def add_users_to_group(accounts_list, users_list, proxies_list):
     global chat_id
     num_accounts = len(accounts_list)
     num_users = len(users_list)
@@ -39,22 +47,26 @@ async def add_users_to_group(accounts_list, users_list):
     usf = []
     pause = int(open("pause.txt", "r").read())
 
-
     while user_index < num_users:
         for index in range(num_accounts):
+
             clients = accounts_list[index]
-            username = users_list[user_index]
+            proxy = proxies_list[index] if index < len(proxies_list) else None
+
+            if proxy:
+                clients = Client(clients, api_id=int(config.api_id), api_hash=config.api_hash, proxy=proxy)
+            else:
+                clients = Client(clients, api_id=int(config.api_id), api_hash=config.api_hash)
+
             global account
             global accountss
+            username = users_list[user_index]
             try:
                 await clients.start()
                 if username not in open("added_users.txt", "r"):
-                    list = []
-                    file = open("text.txt", "r", encoding='utf-8')
-                    for i in file:
-                        list.append(i)
+                    file = open("text.txt", "r", encoding='utf-8').read()
                     try:
-                        await clients.send_video(str(username), "video.mp4", choice(list), width=1920, height=1080)
+                        await clients.send_video(str(username), "video.mp4", file, width=1920, height=1080)
                     except:
                         await clients.send_message(str(username), choice(list))
                     print(f"Аккаунт {accountss[index]} написал {username}.")
@@ -85,10 +97,110 @@ async def add_users_to_group(accounts_list, users_list):
 async def main():
     accounts_file = 'accounts.txt'  
     users_file = 'users.txt' 
+    proxies_file = 'proxies.txt'
 
     accounts_list = read_accounts(accounts_file)
     users_list = read_users(users_file)
+    proxies_list = read_proxies(proxies_file)
 
-    await add_users_to_group(accounts_list, users_list)
+    await add_users_to_group(accounts_list, users_list, proxies_list)
+
+asyncio.run(main())
+
+
+
+"""app = Clint("my_account", api_hash=config.api_hash, api_id=config.api_id, proxy=proxy)
+
+@app.on_message(filters.command("piar"))
+async def start_command_handler(client, msg:Message):
+    with open("users.TXT", "r") as file:
+        for i in file:
+            data_string = i
+            pattern = r"Username: (\w+);"
+            matches = re.search(pattern, data_string)
+            username = matches.group(1)
+            try:
+                print(username)
+                await app.add_chat_members(msg.chat.id, username)
+                print('added ' + i.username)
+                await asyncio.sleep(10)
+            except Exception as e:
+                print(e)
+                await asyncio.sleep(10)
+            
+           
+    await msg.delete()
+
+app.run()
+app = Clint("my_account", api_hash=config.api_hash, api_id=config.api_id, proxy=proxy)
+
+@app.on_message(filters.command("piar"))
+async def start_command_handler(client, msg:Message):
+    with open("users.TXT", "r") as file:
+        for i in file:
+            data_string = i
+            pattern = r"Username: (\w+);"
+            matches = re.search(pattern, data_string)
+            username = matches.group(1)
+            try:
+                print(username)
+                await app.add_chat_members(msg.chat.id, username)
+                print('added ' + i.username)
+                await asyncio.sleep(10)
+            except Exception as e:
+                print(e)
+                await asyncio.sleep(10)
+            
+           
+    await msg.delete()
+
+app.run()
+app = Clint("my_account", api_hash=config.api_hash, api_id=config.api_id, proxy=proxy)
+
+@app.on_message(filters.command("piar"))
+async def start_command_handler(client, msg:Message):
+    with open("users.TXT", "r") as file:
+        for i in file:
+            data_string = i
+            pattern = r"Username: (\w+);"
+            matches = re.search(pattern, data_string)
+            username = matches.group(1)
+            try:
+                print(username)
+                await app.add_chat_members(msg.chat.id, username)
+                print('added ' + i.username)
+                await asyncio.sleep(10)
+            except Exception as e:
+                print(e)
+                await asyncio.sleep(10)
+            
+           
+    await msg.delete()
+
+app.run()
+app = Clint("my_account", api_hash=config.api_hash, api_id=config.api_id, proxy=proxy)
+
+@app.on_message(filters.command("piar"))
+async def start_command_handler(client, msg:Message):
+    with open("users.TXT", "r") as file:
+        for i in file:
+            data_string = i
+            pattern = r"Username: (\w+);"
+            matches = re.search(pattern, data_string)
+            username = matches.group(1)
+            try:
+                print(username)
+                await app.add_chat_members(msg.chat.id, username)
+                print('added ' + i.username)
+                await asyncio.sleep(10)
+            except Exception as e:
+                print(e)
+                await asyncio.sleep(10)
+            
+           
+    await msg.delete()
+
+app.run()"""
+
 
 asyncio.run(main())
